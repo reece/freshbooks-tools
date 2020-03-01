@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+import csv
+import logging
+import webbrowser
+
+import coloredlogs
+import maya
+
+from freshbooks.client import FreshBooksClient
+
+
+_logger = logging.getLogger()
+
+
+
+def generate_clingen_time_entries(fbc, fn):
+    """converts an activity log spreadhseet to a series of time entires
+    This is specific to Broad and ClinGen
+    """
+
+    client_id_map = fbc.make_client_id_map()
+    client_project_id_map = fbc.make_client_project_id_map()
+    service_id_map = fbc.make_service_id_map()
+
+    client_id = client_id_map["Broad Institute"]
+    project_id = client_project_id_map[client_id]["ClinGen"]
+    service_id = service_id_map["Consulting"]
+
+    tsv_in = csv.DictReader(open(fn), delimiter="\t")
+    for row in tsv_in:
+        if not row["date"]:
+            continue
+
+        start_str = row["date"] + "T9:00:00Z"
+        start = maya.parse(start_str)
+        duration = int(float(row["time"]) * 3600)
+        messages = row["messages"]
+
+        time_entry = {
+            "is_logged": True,
+            "client_id": client_id,
+            "project_id": project_id,
+            "service_id": service_id,
+            "started_at": start.rfc3339(), 
+            "duration": duration,
+            "note": messages,
+        }
+        yield time_entry
+
+
+
+if __name__ == "__main__":
+    coloredlogs.install(level="INFO")
+
+    sess = get_session()
+    fbc = FreshBooksClient(sess)
+    self = fbc
+
+    # for te in generate_clingen_time_entries(fbc, sys.argv[1]):
+    #     r = fbc.post_time_entry(te)
+    #     _logger.info(f"loaded {r['duration']} @ {r['started_at']}")
+
+    client_id_map = fbc.make_client_id_map()
+    client_project_id_map = fbc.make_client_project_id_map()
+    service_id_map = fbc.make_service_id_map()
+
+    client_id = client_id_map["Broad Institute"]  
+    project_id = client_project_id_map[client_id]["ClinGen"]
+    service_id = service_id_map["Consulting"]
+
+    time_entry = {
+        "is_logged": True,
+        "client_id": client_id,
+        "project_id": project_id,
+        "service_id": service_id,
+        "started_at": None,
+        "duration": None,
+        "note": None,
+    }
+    
